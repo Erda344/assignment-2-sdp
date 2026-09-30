@@ -36,6 +36,9 @@ final class Europa implements Family {
 final class Titan implements Family {
 }
 
+final class Venus implements Family {
+}
+
 interface Suit<F extends Family> {
     String prepare();
     double remainingHours();
@@ -149,6 +152,17 @@ class TitanSuit extends BaseSuit<Titan> {
     }
 }
 
+class VenusSuit extends BaseSuit<Venus> {
+    public VenusSuit() {
+        super(6);
+    }
+
+    @Override
+    public String prepare() {
+        return "Venus suit provides cooling and pressure protection.";
+    }
+}
+
 abstract class BaseTransport<F extends Family>
         implements Transport<F> {
 
@@ -246,6 +260,22 @@ class TitanRover extends BaseTransport<Titan> {
     }
 }
 
+class VenusRover extends BaseTransport<Venus> {
+    public VenusRover() {
+        super(8, 4);
+    }
+
+    @Override
+    public String travel() {
+        return "Venus rover drives across the hot volcanic surface.";
+    }
+
+    @Override
+    public Sample<Venus> collectSample() {
+        return new Sample<>("volcanic rock", 30);
+    }
+}
+
 class MarsAnalyzer implements Analyzer<Mars> {
     @Override
     public double analysisHours() {
@@ -294,6 +324,23 @@ class TitanAnalyzer implements Analyzer<Titan> {
 
         return sample.material() + ": "
                 + sample.measurement() + "% methane, " + result;
+    }
+}
+
+class VenusAnalyzer implements Analyzer<Venus> {
+    @Override
+    public double analysisHours() {
+        return 0.75;
+    }
+
+    @Override
+    public String analyze(Sample<Venus> sample) {
+        String result = sample.measurement() >= 20
+                ? "sulfur-rich"
+                : "sulfur-poor";
+
+        return sample.material() + ": "
+                + sample.measurement() + "% sulfur, " + result;
     }
 }
 
@@ -413,6 +460,23 @@ class TitanFactory extends EquipmentFactory<Titan> {
     }
 }
 
+class VenusFactory extends EquipmentFactory<Venus> {
+    @Override
+    public Suit<Venus> createSuit() {
+        return new VenusSuit();
+    }
+
+    @Override
+    public Transport<Venus> createTransport() {
+        return new VenusRover();
+    }
+
+    @Override
+    public Analyzer<Venus> createAnalyzer() {
+        return new VenusAnalyzer();
+    }
+}
+
 class FactorySelector {
     private static final Map<
             String, Supplier<EquipmentFactory<?>>
@@ -422,6 +486,7 @@ class FactorySelector {
         FACTORIES.put("mars", MarsFactory::new);
         FACTORIES.put("europa", EuropaFactory::new);
         FACTORIES.put("titan", TitanFactory::new);
+        FACTORIES.put("venus", VenusFactory::new);
     }
 
     public static EquipmentFactory<?> select(String destination) {
