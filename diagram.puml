@@ -1,0 +1,211 @@
+@startuml
+title Space Expedition — Factory Method and Abstract Factory
+
+top to bottom direction
+hide empty members
+skinparam classAttributeIconSize 0
+
+class Main
+class FactorySelector {
+    +select(destination: String): EquipmentFactory
+}
+
+interface Family
+class Mars
+class Europa
+class Titan
+class Venus
+
+Family <|.. Mars
+Family <|.. Europa
+Family <|.. Titan
+Family <|.. Venus
+
+package "Product abstractions" {
+    interface "Suit<F>" as Suit {
+        +prepare(): String
+        +remainingHours(): double
+        +consumeOxygen(hours: double): void
+    }
+
+    interface "Transport<F>" as Transport {
+        +travel(): String
+        +travelHours(distance: double): double
+        +remainingEnergy(): double
+        +canTravel(distance: double): boolean
+        +move(distance: double): void
+        +collectSample(): Sample<F>
+    }
+
+    interface "Analyzer<F>" as Analyzer {
+        +analysisHours(): double
+        +analyze(sample: Sample<F>): String
+    }
+
+    class "Sample<F>" as Sample {
+        -material: String
+        -measurement: double
+        +material(): String
+        +measurement(): double
+    }
+
+    abstract class "BaseSuit<F>" as BaseSuit {
+        -oxygenHours: double
+    }
+
+    abstract class "BaseTransport<F>" as BaseTransport {
+        -speed: double
+        -energyPerKm: double
+        -energy: double
+    }
+}
+
+Suit <|.. BaseSuit
+Transport <|.. BaseTransport
+Transport ..> Sample : collects
+Analyzer ..> Sample : analyzes
+
+package "Factory Method" {
+    abstract class "TransportCreator<F>" as TransportCreator {
+        -transport: Transport<F>
+        {abstract} +createTransport(): Transport<F>
+        +getTransport(): Transport<F>
+        +planRoundTrip(distance: double, availableHours: double): double
+    }
+}
+
+TransportCreator o-- Transport : cached transport
+
+note right of TransportCreator
+    Factory Method:
+    createTransport() is overridden.
+
+    Business logic:
+    planRoundTrip() checks
+    travel time and available energy.
+end note
+
+package "Abstract Factory" {
+    abstract class "EquipmentFactory<F>" as EquipmentFactory {
+        {abstract} +createSuit(): Suit<F>
+        {abstract} +createTransport(): Transport<F>
+        {abstract} +createAnalyzer(): Analyzer<F>
+    }
+
+    class MarsFactory <<ConcreteFactory, ConcreteCreator>>
+    class EuropaFactory <<ConcreteFactory, ConcreteCreator>>
+    class TitanFactory <<ConcreteFactory, ConcreteCreator>>
+    class VenusFactory <<ConcreteFactory, ConcreteCreator>>
+}
+
+TransportCreator <|-- EquipmentFactory
+
+EquipmentFactory <|-- MarsFactory
+EquipmentFactory <|-- EuropaFactory
+EquipmentFactory <|-- TitanFactory
+EquipmentFactory <|-- VenusFactory
+
+EquipmentFactory ..> Suit : creates
+EquipmentFactory ..> Transport : creates
+EquipmentFactory ..> Analyzer : creates
+
+note right of EquipmentFactory
+    Abstract Factory:
+    creates three related product types.
+
+    Each concrete factory is also
+    a concrete TransportCreator.
+end note
+
+package "Mars products" {
+    class MarsSuit
+    class MarsRover
+    class MarsAnalyzer
+}
+
+package "Europa products" {
+    class EuropaSuit
+    class EuropaSubmarine
+    class EuropaAnalyzer
+}
+
+package "Titan products" {
+    class TitanSuit
+    class TitanRover
+    class TitanAnalyzer
+}
+
+package "Venus products" {
+    class VenusSuit
+    class VenusRover
+    class VenusAnalyzer
+}
+
+BaseSuit <|-- MarsSuit
+BaseSuit <|-- EuropaSuit
+BaseSuit <|-- TitanSuit
+BaseSuit <|-- VenusSuit
+
+BaseTransport <|-- MarsRover
+BaseTransport <|-- EuropaSubmarine
+BaseTransport <|-- TitanRover
+BaseTransport <|-- VenusRover
+
+Analyzer <|.. MarsAnalyzer
+Analyzer <|.. EuropaAnalyzer
+Analyzer <|.. TitanAnalyzer
+Analyzer <|.. VenusAnalyzer
+
+MarsFactory ..> MarsSuit : creates
+MarsFactory ..> MarsRover : creates
+MarsFactory ..> MarsAnalyzer : creates
+
+EuropaFactory ..> EuropaSuit : creates
+EuropaFactory ..> EuropaSubmarine : creates
+EuropaFactory ..> EuropaAnalyzer : creates
+
+TitanFactory ..> TitanSuit : creates
+TitanFactory ..> TitanRover : creates
+TitanFactory ..> TitanAnalyzer : creates
+
+VenusFactory ..> VenusSuit : creates
+VenusFactory ..> VenusRover : creates
+VenusFactory ..> VenusAnalyzer : creates
+
+class "ExpeditionClient<F>" as ExpeditionClient {
+    -factory: EquipmentFactory<F>
+    -suit: Suit<F>
+    -transport: Transport<F>
+    -analyzer: Analyzer<F>
+    -distanceFromBase: double
+    +survey(distance: double): String
+    +collectAndAnalyze(): String
+    +emergencyReturn(): String
+    +remainingOxygenHours(): double
+    +remainingEnergy(): double
+    +distanceFromBase(): double
+    +status(): String
+}
+
+Main ..> FactorySelector : selects family
+Main ..> ExpeditionClient : creates and runs
+FactorySelector ..> EquipmentFactory : returns
+
+ExpeditionClient --> EquipmentFactory : uses
+ExpeditionClient --> Suit : uses oxygen
+ExpeditionClient --> Transport : travels and collects
+ExpeditionClient --> Analyzer : analyzes samples
+
+note bottom of ExpeditionClient
+    F extends Family.
+
+    Factory, equipment and samples
+    use the same family parameter F.
+
+    Mars products use F = Mars.
+    Europa products use F = Europa.
+    Titan products use F = Titan.
+    Venus products use F = Venus.
+end note
+
+@enduml
