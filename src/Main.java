@@ -14,6 +14,12 @@ public class Main {
                     new EuropaTransportCreator(),
                     new EuropaAnalyzer()
             );
+        } else if (destination.equalsIgnoreCase("titan")) {
+            runExpedition(
+                    new TitanSuit(),
+                    new TitanTransportCreator(),
+                    new TitanAnalyzer()
+            );
         } else {
             System.out.println("Unknown destination: " + destination);
         }
@@ -95,6 +101,13 @@ class EuropaAnalyzer implements Analyzer {
     }
 }
 
+class TitanSuit implements Suit {
+    @Override
+    public String prepare() {
+        return "Titan suit provides heating in extreme cold.";
+    }
+}
+
 class TitanRover implements Transport {
     @Override
     public String travel() {
@@ -104,6 +117,13 @@ class TitanRover implements Transport {
     @Override
     public double travelHours(double distance) {
         return distance / 15;
+    }
+}
+
+class TitanAnalyzer implements Analyzer {
+    @Override
+    public String analyze() {
+        return "Titan analyzer checks samples for hydrocarbons.";
     }
 }
 
